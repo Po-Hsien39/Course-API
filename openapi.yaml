@@ -1,0 +1,1707 @@
+openapi: 3.0.0
+info:
+  version: 3.0.0
+  title: NTU Course API v3
+servers:
+  - url: http://localhost:3000
+externalDocs:
+  url: https://git.neo/ntu_course_system/ntu_course_backend_v3/src/branch/main/src/modules/index.ts
+  description: 完整的 error codes 列表
+components:
+  schemas:
+    Progress:
+      type: object
+      nullable: true
+      properties:
+        phase:
+          type: string
+          enum:
+            - PrePreReg
+            - PreReg1
+            - PreReg2
+            - AddDrop1
+            - AddDrop2
+            - AddDrop3
+            - AddDrop4
+            - AddDrop5
+            - AddDrop6
+            - Final
+        status:
+          type: string
+          enum:
+            - Preselecting
+            - Started
+            - Waiting
+            - Ended
+        canAddCourse:
+          type: boolean
+        link:
+          type: string
+        startAt:
+          type: string
+          nullable: true
+        endAt:
+          type: string
+          nullable: true
+      required:
+        - phase
+        - status
+        - canAddCourse
+        - link
+        - startAt
+        - endAt
+    Teacher:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+          description: 教師名稱
+        hostDepartment:
+          type: string
+          nullable: true
+        college:
+          type: string
+          nullable: true
+        jobTitle:
+          type: string
+          nullable: true
+        websiteUrl:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        office:
+          type: string
+          nullable: true
+        info:
+          type: string
+          nullable: true
+      description: 教師
+    Department:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 系所代碼
+        name:
+          type: string
+          description: 系所名稱
+        shortName:
+          type: string
+          nullable: true
+          description: 系所簡稱
+      required:
+        - id
+        - name
+      description: 系所
+    CourseTarget:
+      type: object
+      properties:
+        department:
+          $ref: "#/components/schemas/Department"
+        courseType:
+          type: string
+          enum:
+            - Normal
+            - Grouped
+            - General
+            - EducationProgram
+            - NightSchool
+            - PhysicalEducation
+            - MilitaryTrainingClass
+          description: 課程類別
+        isCompulsory:
+          type: boolean
+          description: 是否為必修
+        isPreallocated:
+          type: boolean
+          nullable: true
+          description: 是否預分配
+        generalMarks:
+          type: array
+          items:
+            type: string
+            enum:
+              - A1
+              - A2
+              - A3
+              - A4
+              - A5
+              - A6
+              - A7
+              - A8
+              - B
+              - C
+          description: 通識領域
+      required:
+        - department
+        - courseType
+        - isCompulsory
+        - generalMarks
+    Classroom:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          example: 小班教室01
+        location:
+          type: string
+          nullable: true
+          example: 基礎醫學大樓B1
+        buildingName:
+          type: string
+          nullable: true
+          example: "基礎醫學大樓 "
+        buildingId:
+          type: string
+          nullable: true
+        accessibility:
+          type: boolean
+        layer:
+          type: string
+          nullable: true
+        detail:
+          type: string
+          description: 教室詳細資料
+      required:
+        - id
+        - name
+        - accessibility
+        - detail
+    SpecializedProgram:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 領域專長代碼
+        name:
+          type: string
+      required:
+        - code
+        - name
+    StudentGradeLimit:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+          description: 限制說明
+          example: 限學士班二年級以上
+      required:
+        - id
+        - description
+    PrecourseLimit:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: string
+        identificationType:
+          type: string
+          enum:
+            - CourseCode
+            - CourseName
+        studentLimitType:
+          type: string
+          enum:
+            - DepartmentBachelor
+            - SchoolBachelor
+            - DepartmentBachelorAndGraduateStudent
+            - SchoolBachelorAndGraduateStudent
+        precourseLimitCourses:
+          type: array
+          items:
+            type: object
+            properties:
+              order:
+                type: integer
+                description: 序號
+              precourseName:
+                type: string
+                description: 先修科目 (課程名稱)
+              precourseCode:
+                type: string
+                description: 先修科目 (課程課程識別碼)
+              requiredScore:
+                type: integer
+                description: 及格分數
+              isCorequisite:
+                type: boolean
+                description: 當學期是否並修
+            required:
+              - order
+              - precourseName
+              - precourseCode
+              - requiredScore
+              - isCorequisite
+          description: 擋修科目
+      required:
+        - id
+        - identificationType
+        - studentLimitType
+        - precourseLimitCourses
+      description: 先修限制
+    Course:
+      type: object
+      properties:
+        id:
+          type: string
+        serial:
+          type: string
+          description: 流水號, 可能無值
+        identifier:
+          type: string
+          description: 課號
+          example: Common1011
+        code:
+          type: string
+          description: 課程識別碼
+        name:
+          type: string
+          description: 課程名稱
+        notes:
+          type: string
+          description: 課程備註
+        teacher:
+          $ref: "#/components/schemas/Teacher"
+        class:
+          type: string
+          nullable: true
+          description: 班次
+        courseTargets:
+          type: array
+          items:
+            $ref: "#/components/schemas/CourseTarget"
+          description: 授課對象
+        schedules:
+          type: array
+          items:
+            type: object
+            properties:
+              weekday:
+                type: integer
+              intervals:
+                type: array
+                items:
+                  type: string
+              classroom:
+                $ref: "#/components/schemas/Classroom"
+            required:
+              - weekday
+              - intervals
+              - classroom
+          description: 上課時間
+        isCommon:
+          type: boolean
+          description: 是否為共同選修
+        intensiveWeeks:
+          type: array
+          items:
+            type: number
+          description: 密集課程週次
+        specializedPrograms:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpecializedProgram"
+          description: 修課總人數
+        credits:
+          type: number
+          description: 學分
+        totalStudentQuota:
+          type: number
+          description: 修課總人數
+        otherDepartmentsStudentQuota:
+          type: number
+          description: 外系人數
+        nonNtuStudentQuota:
+          type: number
+          description: 外校人數
+        changeItems:
+          type: array
+          items:
+            type: string
+            enum:
+              - Time
+              - Class
+              - Teacher
+              - StudentNumber
+              - OtherDepartmentsStudentNum
+              - Mark
+              - Enroll
+          description: 異動項目
+        status:
+          type: string
+          enum:
+            - Normal
+            - New
+            - Updated
+            - Canceled
+          description: 狀態
+        enrollMethod:
+          type: integer
+          nullable: true
+          description: 加簽方式
+        studentGradeLimits:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudentGradeLimit"
+          description: 年級限制
+        isEnglishTaught:
+          type: boolean
+          description: 是否英語授課
+        precourseLimit:
+          $ref: "#/components/schemas/PrecourseLimit"
+        semester:
+          type: string
+          description: 學期
+        provider:
+          type: string
+          enum:
+            - NTU
+            - NTUST
+            - NTNU
+          description: 開課學校
+        hostDepartment:
+          type: string
+          description: 開課系所
+        coreCapabilityUrlQuery:
+          type: string
+          nullable: true
+        basicAttainmentUrlQuery:
+          type: string
+          nullable: true
+        coolUrl:
+          type: string
+          nullable: true
+          description: NTU Cool 網址
+      required:
+        - id
+        - serial
+        - identifier
+        - code
+        - name
+        - notes
+        - teacher
+        - courseTargets
+        - schedules
+        - isCommon
+        - intensiveWeeks
+        - specializedPrograms
+        - credits
+        - totalStudentQuota
+        - otherDepartmentsStudentQuota
+        - nonNtuStudentQuota
+        - changeItems
+        - status
+        - studentGradeLimits
+        - isEnglishTaught
+        - semester
+        - provider
+        - hostDepartment
+    CourseCollectionItem:
+      type: object
+      properties:
+        courseId:
+          type: string
+        course:
+          $ref: "#/components/schemas/Course"
+      required:
+        - courseId
+    PreselectedTable:
+      type: object
+      properties:
+        preselectedCourses:
+          type: array
+          items:
+            type: object
+            properties:
+              courseId:
+                type: string
+              course:
+                $ref: "#/components/schemas/Course"
+              field:
+                type: string
+                enum:
+                  - Calculus
+                  - Chinese
+                  - ForeignLanguage
+                  - Common
+            required:
+              - courseId
+        assignedCourses:
+          type: array
+          items:
+            type: object
+            properties:
+              courseId:
+                type: string
+              course:
+                $ref: "#/components/schemas/Course"
+            required:
+              - courseId
+      required:
+        - preselectedCourses
+        - assignedCourses
+    ResultTable:
+      type: object
+      properties:
+        assignedCourses:
+          type: array
+          items:
+            type: object
+            properties:
+              courseId:
+                type: string
+              course:
+                $ref: "#/components/schemas/Course"
+            required:
+              - courseId
+        unassignedCourses:
+          type: array
+          items:
+            type: object
+            properties:
+              courseId:
+                type: string
+              course:
+                $ref: "#/components/schemas/Course"
+              reason:
+                type: string
+                nullable: true
+            required:
+              - courseId
+              - reason
+      required:
+        - assignedCourses
+        - unassignedCourses
+  parameters: {}
+paths:
+  /api/v3/config/progresses:
+    get:
+      summary: 列出指定學期的選課進度
+      tags:
+        - Config
+      parameters:
+        - schema:
+            type: string
+          required: false
+          name: semester
+          in: query
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  semester:
+                    type: string
+                  progress:
+                    $ref: "#/components/schemas/Progress"
+                  progresses:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Progress"
+                required:
+                  - semester
+                  - progress
+                  - progresses
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1002"
+                  message:
+                    type: string
+                    enum:
+                      - Semester not found
+                required:
+                  - code
+                  - message
+  /api/v3/admin/config/progresses/:semester:
+    put:
+      summary: 修改指定學期的選課進度
+      tags:
+        - Config
+        - Admin
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: semester
+          in: path
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      requestBody:
+        content:
+          json:
+            schema:
+              type: object
+              properties:
+                progresses:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Progress"
+              required:
+                - progresses
+      responses:
+        "204":
+          description: ""
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1002"
+                  message:
+                    type: string
+                    enum:
+                      - Semester not found
+                required:
+                  - code
+                  - message
+  /api/v3/courses/search/quick:
+    get:
+      summary: 快速搜尋
+      tags:
+        - Courses
+      parameters:
+        - schema:
+            type: string
+            description: 關鍵字，用來搜尋課名、教師名、流水號、課號與課程識別碼
+          required: false
+          name: keyword
+          in: query
+        - schema:
+            type: string
+            description: 排除關鍵字，用來排除課名。若有多個則用逗號隔開
+            example: 服務學習,專題研究
+          required: false
+          name: excludedKeywords
+          in: query
+        - schema:
+            anyOf:
+              - type: string
+                enum:
+                  - full
+              - type: string
+                enum:
+                  - half
+            description: 課程長度，全年或半年
+          required: false
+          name: durationType
+          in: query
+        - schema:
+            type: boolean
+            nullable: true
+            description: 是否為英語授課
+          required: false
+          name: isEnglishTaught
+          in: query
+        - schema:
+            type: boolean
+            nullable: true
+            description: 是否為遠距課程
+          required: false
+          name: isDistanceLearning
+          in: query
+        - schema:
+            type: boolean
+            nullable: true
+            description: 是否為加開課程
+          required: false
+          name: isAdditionalCourse
+          in: query
+        - schema:
+            type: boolean
+            nullable: true
+            description: 是否為沒有先修課程
+          required: false
+          name: noPrerequisite
+          in: query
+        - schema:
+            type: boolean
+            nullable: true
+            description: 是否有異動
+          required: false
+          name: hasChanged
+          in: query
+        - schema:
+            type: array
+            items:
+              anyOf:
+                - type: string
+                  enum:
+                    - "1"
+                - type: string
+                  enum:
+                    - "2"
+                - type: string
+                  enum:
+                    - "3"
+            description: 加選方式
+            example:
+              - "1"
+              - "3"
+          required: false
+          name: enrollMethods
+          in: query
+        - schema:
+            type: string
+            description: 課程時間。需要將時間二維陣列轉成 json string 傳遞
+            example: '[["3"], [], ["6", "7", "8"], [], [], []]'
+          required: false
+          name: schedules
+          in: query
+        - schema:
+            type: boolean
+            nullable: true
+            description: 是否嚴格搜尋節次，若為 true，則課程的時間必須完全符合搜尋的時段。只有在 schedules 有值時才會生效
+          required: false
+          name: isStrictlyMatchTime
+          in: query
+        - schema:
+            type: string
+            description: " 系所（授課對象）代碼。若有多個則用逗號隔開"
+            example: 9020,2070
+          required: false
+          name: departments
+          in: query
+        - schema:
+            anyOf:
+              - type: string
+                enum:
+                  - compulsory
+              - type: string
+                enum:
+                  - elective
+            description: 課程為選修或必修。只有在 departments 有值時才會生效
+          required: false
+          name: requirementType
+          in: query
+        - schema:
+            type: string
+            description: 學期
+            example: 112-1
+          required: true
+          name: semester
+          in: query
+        - schema:
+            type: integer
+            nullable: true
+            description: 頁碼
+          required: false
+          name: pageIndex
+          in: query
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalCount:
+                    type: number
+                    description: 符合條件的課程總數
+                  courses:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Course"
+                required:
+                  - totalCount
+                  - courses
+  /api/v3/courses:
+    put:
+      summary: 同步單一課程
+      tags:
+        - Courses
+      requestBody:
+        content:
+          json:
+            schema:
+              type: object
+              properties:
+                serial:
+                  type: string
+                semester:
+                  type: string
+              required:
+                - serial
+                - semester
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: 更新狀態
+                required:
+                  - status
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1002"
+                  message:
+                    type: string
+                    enum:
+                      - Semester not found
+                required:
+                  - code
+                  - message
+  /api/v3/course-collections/:semester:
+    get:
+      summary: 列出使用者的課程收藏
+      tags:
+        - Course Collection
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: semester
+          in: path
+        - schema:
+            type: boolean
+            nullable: true
+          required: false
+          name: withCourse
+          in: query
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CourseCollectionItem"
+                required:
+                  - items
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1002"
+                  message:
+                    type: string
+                    enum:
+                      - Semester not found
+                required:
+                  - code
+                  - message
+    post:
+      summary: 新增課程至使用者的課程收藏
+      tags:
+        - Course Collection
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: semester
+          in: path
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      requestBody:
+        content:
+          json:
+            schema:
+              type: object
+              properties:
+                courseId:
+                  type: string
+              required:
+                - courseId
+      responses:
+        "201":
+          description: ""
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1004"
+                  message:
+                    type: string
+                    enum:
+                      - Course collection limit exceeded
+                required:
+                  - code
+                  - message
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1001"
+                  message:
+                    type: string
+                    enum:
+                      - Course not found
+                required:
+                  - code
+                  - message
+        "409":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1005"
+                  message:
+                    type: string
+                    enum:
+                      - Already in collection
+                required:
+                  - code
+                  - message
+    delete:
+      summary: 從使用者的課程收藏中刪除課程
+      tags:
+        - Course Collection
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: semester
+          in: path
+        - schema:
+            type: string
+          required: true
+          name: courseId
+          in: query
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      responses:
+        "204":
+          description: ""
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1003"
+                  message:
+                    type: string
+                    enum:
+                      - Course collection not found
+                required:
+                  - code
+                  - message
+  /api/v3/course-tables/preselected/:semester/:phase:
+    get:
+      summary: 取得使用者的預選課表
+      tags:
+        - Course Table
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: semester
+          in: path
+        - schema:
+            type: string
+            enum:
+              - PrePreReg
+              - PreReg1
+              - PreReg2
+              - AddDrop1
+              - AddDrop2
+              - AddDrop3
+              - AddDrop4
+              - AddDrop5
+              - AddDrop6
+              - Final
+          required: true
+          name: phase
+          in: path
+        - schema:
+            type: boolean
+            nullable: true
+          required: false
+          name: withCourse
+          in: query
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreselectedTable"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1002"
+                  message:
+                    type: string
+                    enum:
+                      - Semester not found
+                required:
+                  - code
+                  - message
+  /api/v3/course-tables/result/:semester/:phase:
+    get:
+      summary: 取得使用者的選課結果
+      tags:
+        - Course Table
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: semester
+          in: path
+        - schema:
+            type: string
+            enum:
+              - PrePreReg
+              - PreReg1
+              - PreReg2
+              - AddDrop1
+              - AddDrop2
+              - AddDrop3
+              - AddDrop4
+              - AddDrop5
+              - AddDrop6
+              - Final
+          required: true
+          name: phase
+          in: path
+        - schema:
+            type: boolean
+            nullable: true
+          required: false
+          name: withCourse
+          in: query
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultTable"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1002"
+                  message:
+                    type: string
+                    enum:
+                      - Semester not found
+                required:
+                  - code
+                  - message
+  /api/v3/course-tables/preselected:
+    post:
+      summary: 新增預選課程至使用者的課表
+      tags:
+        - Course Table
+      parameters:
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      requestBody:
+        content:
+          json:
+            schema:
+              type: object
+              properties:
+                courseId:
+                  type: string
+                  format: uuid
+              required:
+                - courseId
+      responses:
+        "201":
+          description: ""
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1007"
+                  message:
+                    type: string
+                    enum:
+                      - Preselected course limit exceeded
+                required:
+                  - code
+                  - message
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1001"
+                  message:
+                    type: string
+                    enum:
+                      - Course not found
+                required:
+                  - code
+                  - message
+    put:
+      summary: 修改使用者全部的預選課程
+      tags:
+        - Course Table
+      parameters:
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      requestBody:
+        content:
+          json:
+            schema:
+              type: object
+              properties:
+                courseIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+              required:
+                - courseIds
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1007"
+                  message:
+                    type: string
+                    enum:
+                      - Preselected course limit exceeded
+                required:
+                  - code
+                  - message
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1001"
+                  message:
+                    type: string
+                    enum:
+                      - Course not found
+                required:
+                  - code
+                  - message
+    delete:
+      summary: 從使用者的課程收藏中刪除課程
+      tags:
+        - Course Table
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: courseId
+          in: query
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1009"
+                  message:
+                    type: string
+                    enum:
+                      - Course table not available
+                required:
+                  - code
+                  - message
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1006"
+                  message:
+                    type: string
+                    enum:
+                      - Preselected course not found
+                required:
+                  - code
+                  - message
+  /api/v3/course-tables/preselected/export:
+    post:
+      summary: 匯出使用者的預選課程至 NOL
+      tags:
+        - Course Table
+      parameters:
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1009"
+                  message:
+                    type: string
+                    enum:
+                      - Course table not available
+                required:
+                  - code
+                  - message
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1010"
+                  message:
+                    type: string
+                    enum:
+                      - User not found
+                required:
+                  - code
+                  - message
+  /api/v3/admin/course-tables/dev/result/:semester/:phase:
+    get:
+      summary: 取得測試使用者的選課結果
+      tags:
+        - Course Table
+        - Admin
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: semester
+          in: path
+        - schema:
+            type: string
+            enum:
+              - PrePreReg
+              - PreReg1
+              - PreReg2
+              - AddDrop1
+              - AddDrop2
+              - AddDrop3
+              - AddDrop4
+              - AddDrop5
+              - AddDrop6
+              - Final
+          required: true
+          name: phase
+          in: path
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultTable"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1002"
+                  message:
+                    type: string
+                    enum:
+                      - Semester not found
+                required:
+                  - code
+                  - message
+    put:
+      summary: 更改測試使用者的選課結果
+      tags:
+        - Course Table
+        - Admin
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: semester
+          in: path
+        - schema:
+            type: string
+            enum:
+              - PrePreReg
+              - PreReg1
+              - PreReg2
+              - AddDrop1
+              - AddDrop2
+              - AddDrop3
+              - AddDrop4
+              - AddDrop5
+              - AddDrop6
+              - Final
+          required: true
+          name: phase
+          in: path
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      requestBody:
+        content:
+          json:
+            schema:
+              type: object
+              properties:
+                assignedCourseIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                unassignedCourseIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+              required:
+                - assignedCourseIds
+                - unassignedCourseIds
+      responses:
+        "204":
+          description: ""
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1001"
+                  message:
+                    type: string
+                    enum:
+                      - Course not found
+                required:
+                  - code
+                  - message
