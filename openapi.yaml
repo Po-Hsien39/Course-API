@@ -763,6 +763,13 @@ paths:
       summary: 同步單一課程
       tags:
         - Courses
+      parameters:
+        - schema:
+            type: string
+            description: API key
+          required: true
+          name: x-api-key
+          in: header
       requestBody:
         content:
           json:
@@ -817,11 +824,11 @@ paths:
                   code:
                     type: string
                     enum:
-                      - "1002"
+                      - "1001"
                   message:
                     type: string
                     enum:
-                      - Semester not found
+                      - Course not found
                 required:
                   - code
                   - message
