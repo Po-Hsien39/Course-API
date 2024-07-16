@@ -386,6 +386,66 @@ components:
           type: string
           nullable: true
           description: NTU Cool 網址
+        practiceGroups:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              courseId:
+                type: string
+                description: 課程 ID
+              group:
+                type: string
+                description: 實習組別
+              studentQuota:
+                type: number
+                description: 學生名額
+              taQuota:
+                type: number
+                description: 助教名額
+              classroom:
+                type: string
+                description: 教室
+              comment:
+                type: string
+                nullable: true
+                description: 備註
+              practiceGroupSchedules:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    practiceGroupId:
+                      type: string
+                      description: 實習組別 ID
+                    weekday:
+                      type: integer
+                      description: 星期
+                    lessons:
+                      type: array
+                      items:
+                        type: string
+                      description: 節次
+                  required:
+                    - id
+                    - practiceGroupId
+                    - weekday
+                    - lessons
+                description: 實習組別時間
+            required:
+              - id
+              - courseId
+              - group
+              - studentQuota
+              - taQuota
+              - classroom
+              - comment
+              - practiceGroupSchedules
+          description: 實習組別
       required:
         - id
         - serial
@@ -410,6 +470,7 @@ components:
         - semester
         - provider
         - hostDepartment
+        - practiceGroups
     CourseCollectionItem:
       type: object
       properties:
@@ -427,7 +488,9 @@ components:
           items:
             type: object
             properties:
-              courseId:
+              semester:
+                type: string
+              serial:
                 type: string
               course:
                 $ref: "#/components/schemas/Course"
@@ -439,7 +502,8 @@ components:
                   - ForeignLanguage
                   - Common
             required:
-              - courseId
+              - semester
+              - serial
         assignedCourses:
           type: array
           items:
@@ -509,6 +573,10 @@ paths:
                 properties:
                   semester:
                     type: string
+                  semesterList:
+                    type: array
+                    items:
+                      type: string
                   progress:
                     $ref: "#/components/schemas/Progress"
                   progresses:
@@ -517,6 +585,7 @@ paths:
                       $ref: "#/components/schemas/Progress"
                 required:
                   - semester
+                  - semesterList
                   - progress
                   - progresses
         "404":
@@ -758,80 +827,6 @@ paths:
                 required:
                   - totalCount
                   - courses
-  /api/v3/courses:
-    put:
-      summary: 同步單一課程
-      tags:
-        - Courses
-      parameters:
-        - schema:
-            type: string
-            description: API key
-          required: true
-          name: x-api-key
-          in: header
-      requestBody:
-        content:
-          json:
-            schema:
-              type: object
-              properties:
-                serial:
-                  type: string
-                semester:
-                  type: string
-              required:
-                - serial
-                - semester
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    description: 更新狀態
-                required:
-                  - status
-        "401":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    enum:
-                      - "0005"
-                  message:
-                    type: string
-                    enum:
-                      - Unauthorized
-                required:
-                  - code
-                  - message
-        "404":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    enum:
-                      - "1001"
-                  message:
-                    type: string
-                    enum:
-                      - Course not found
-                required:
-                  - code
-                  - message
   /api/v3/course-collections/:semester:
     get:
       summary: 列出使用者的課程收藏
@@ -1254,11 +1249,13 @@ paths:
             schema:
               type: object
               properties:
-                courseId:
+                semester:
                   type: string
-                  format: uuid
+                serial:
+                  type: string
               required:
-                - courseId
+                - semester
+                - serial
       responses:
         "201":
           description: ""
@@ -1406,7 +1403,12 @@ paths:
         - schema:
             type: string
           required: true
-          name: courseId
+          name: semester
+          in: query
+        - schema:
+            type: string
+          required: true
+          name: serial
           in: query
         - schema:
             type: string
@@ -1709,6 +1711,200 @@ paths:
                     type: string
                     enum:
                       - Course not found
+                required:
+                  - code
+                  - message
+  /api/v3/admin/test-users:
+    get:
+      summary: 取得測試帳戶
+      tags:
+        - Test Account
+        - Admin
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        sequence:
+                          type: string
+                        departmentId:
+                          type: string
+                          nullable: true
+                        grade:
+                          type: string
+                          nullable: true
+                        id:
+                          type: string
+                      required:
+                        - sequence
+                        - departmentId
+                        - grade
+                        - id
+                required:
+                  - user
+  /api/v3/admin/test-user:
+    post:
+      summary: 創建測試帳戶
+      tags:
+        - Test Account
+        - Admin
+      parameters:
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      requestBody:
+        content:
+          json:
+            schema:
+              type: object
+              properties:
+                sequence:
+                  type: string
+                departmentId:
+                  type: string
+                  nullable: true
+                grade:
+                  type: string
+                  nullable: true
+              required:
+                - sequence
+                - departmentId
+                - grade
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      sequence:
+                        type: string
+                      departmentId:
+                        type: string
+                        nullable: true
+                      grade:
+                        type: string
+                        nullable: true
+                      id:
+                        type: string
+                    required:
+                      - sequence
+                      - departmentId
+                      - grade
+                      - id
+                required:
+                  - user
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "409":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1011"
+                  message:
+                    type: string
+                    enum:
+                      - User already exists
+                required:
+                  - code
+                  - message
+    delete:
+      summary: 移除測試帳戶
+      tags:
+        - Test Account
+        - Admin
+      parameters:
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      requestBody:
+        content:
+          json:
+            schema:
+              type: object
+              properties:
+                sequence:
+                  type: string
+              required:
+                - sequence
+      responses:
+        "204":
+          description: ""
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1010"
+                  message:
+                    type: string
+                    enum:
+                      - User not found
                 required:
                   - code
                   - message
