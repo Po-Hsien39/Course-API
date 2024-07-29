@@ -120,6 +120,7 @@ components:
           description: 課程類別
         isCompulsory:
           type: boolean
+          nullable: true
           description: 是否為必修
         isPreallocated:
           type: boolean
@@ -1064,33 +1065,12 @@ paths:
                 required:
                   - code
                   - message
-  /api/v3/course-tables/preselected/:semester/:phase:
+  /api/v3/course-tables/preselected:
     get:
       summary: 取得使用者的預選課表
       tags:
         - Course Table
       parameters:
-        - schema:
-            type: string
-          required: true
-          name: semester
-          in: path
-        - schema:
-            type: string
-            enum:
-              - PrePreReg
-              - PreReg1
-              - PreReg2
-              - AddDrop1
-              - AddDrop2
-              - AddDrop3
-              - AddDrop4
-              - AddDrop5
-              - AddDrop6
-              - Final
-          required: true
-          name: phase
-          in: path
         - schema:
             type: boolean
             nullable: true
@@ -1147,90 +1127,6 @@ paths:
                 required:
                   - code
                   - message
-  /api/v3/course-tables/result/:semester/:phase:
-    get:
-      summary: 取得使用者的選課結果
-      tags:
-        - Course Table
-      parameters:
-        - schema:
-            type: string
-          required: true
-          name: semester
-          in: path
-        - schema:
-            type: string
-            enum:
-              - PrePreReg
-              - PreReg1
-              - PreReg2
-              - AddDrop1
-              - AddDrop2
-              - AddDrop3
-              - AddDrop4
-              - AddDrop5
-              - AddDrop6
-              - Final
-          required: true
-          name: phase
-          in: path
-        - schema:
-            type: boolean
-            nullable: true
-          required: false
-          name: withCourse
-          in: query
-        - schema:
-            type: string
-            description: Access token
-            example: Bearer <token>
-          required: true
-          name: Authorization
-          in: header
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResultTable"
-        "401":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    enum:
-                      - "0005"
-                  message:
-                    type: string
-                    enum:
-                      - Unauthorized
-                required:
-                  - code
-                  - message
-        "404":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    enum:
-                      - "1002"
-                  message:
-                    type: string
-                    enum:
-                      - Semester not found
-                required:
-                  - code
-                  - message
-  /api/v3/course-tables/preselected:
     post:
       summary: 新增預選課程至使用者的課表
       tags:
@@ -1471,6 +1367,89 @@ paths:
                     type: string
                     enum:
                       - Preselected course not found
+                required:
+                  - code
+                  - message
+  /api/v3/course-tables/result/:semester/:phase:
+    get:
+      summary: 取得使用者的選課結果
+      tags:
+        - Course Table
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: semester
+          in: path
+        - schema:
+            type: string
+            enum:
+              - PrePreReg
+              - PreReg1
+              - PreReg2
+              - AddDrop1
+              - AddDrop2
+              - AddDrop3
+              - AddDrop4
+              - AddDrop5
+              - AddDrop6
+              - Final
+          required: true
+          name: phase
+          in: path
+        - schema:
+            type: boolean
+            nullable: true
+          required: false
+          name: withCourse
+          in: query
+        - schema:
+            type: string
+            description: Access token
+            example: Bearer <token>
+          required: true
+          name: Authorization
+          in: header
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultTable"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "0005"
+                  message:
+                    type: string
+                    enum:
+                      - Unauthorized
+                required:
+                  - code
+                  - message
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "1002"
+                  message:
+                    type: string
+                    enum:
+                      - Semester not found
                 required:
                   - code
                   - message
